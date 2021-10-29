@@ -18,45 +18,56 @@ import java.util.TimerTask;
  */
 public class GameSaver
 {
-    private static final int SAVE_INTERVAL = 5*60*1000; //five minutes
-    private static final String SRC_PATH = "C:\\Program Files (x86)\\Games\\Steam\\userdata\\161405924\\282070\\remote";
-    private static final String TARGET_PATH = "C:\\Users\\kenny\\Desktop\\This War of Mine Backups\\";
-
     public static void main(String[] args)
     {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
+        //process input arguments
+        if (args.length != 3)
+        {
+            System.err.println("This program requires exactly 3 input arguments to run: The save" +
+                               "interval (seconds), the source path, and the target path.");
+            System.exit(1);
+        }
+
+        long saveInterval = Long.valueOf(args[0]);
+        String srcPath = args[1];
+        String targetPath = args[2] + "\\";
 
         //create a timer to backup data at a fixed interval
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask()
         {
+            private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
+
             @Override
             public void run()
             {
                 System.out.println("Saving files at: " + dtf.format(LocalDateTime.now()));
-                saveFiles();
+                saveFiles(srcPath, targetPath);
             }
         },
         0, //no initial delay
-        SAVE_INTERVAL);
+        saveInterval);
     }
 
     /**
      * Creates a new folder with a date and time stamp at the
      * target path and copies in the files at the source path.
+     *
+     * @param srcPath The path to copy the files to save
+     * @param targetPath The path to save the copied files to
      */
-    private static void saveFiles()
+    private static void saveFiles(String srcPath, String targetPath)
     {
         //get the timestamp for a unique name
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd_HH-mm-ss");
         String timeStamp = dtf.format(LocalDateTime.now());
 
         //create a new directory to save to
-        File targetDir = new File(TARGET_PATH + timeStamp);
+        File targetDir = new File(targetPath + timeStamp);
         targetDir.mkdir();
 
         //copy the contents of the SRC_PATH to the new directory
-        for (File srcFile : new File(SRC_PATH).listFiles())
+        for (File srcFile : new File(srcPath).listFiles())
         {
             File targetFile = new File(targetDir.getAbsolutePath() + "\\" + srcFile.getName());
 
@@ -66,7 +77,7 @@ public class GameSaver
             }
             catch (IOException e)
             {
-                System.out.println("Error saving the following file: " + srcFile.getAbsolutePath());
+                System.err.println("Error saving the following file: " + srcFile.getAbsolutePath());
                 e.printStackTrace();
             }
         }
